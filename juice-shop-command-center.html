@@ -175,8 +175,29 @@ const storage=(typeof window!=="undefined"&&window.storage)?window.storage:{
   set:async(k,v)=>{localStorage.setItem(k,v);},
   delete:async k=>{localStorage.removeItem(k);}
 };
+const NAME2ID=new Map();CHALLENGES.forEach(c=>NAME2ID.set(c.name.toLowerCase(),c.id));
+let LIVE={url:"",timer:null,ids:new Set(),status:"idle"};
+function isBlocked(){return typeof location!=="undefined"&&location.protocol==="https:";}
+async function syncOnce(url){
+  let matched=0;
+  try{
+    const r=await fetch(url.replace(/\/+$/,"")+"/api/Challenges",{cache:"no-store"});
+    if(!r.ok)return{matched:0,error:"HTTP "+r.status};
+    const j=await r.json();const data=(j&&j.data)||[];
+    let changed=false;
+    data.forEach(row=>{
+      if(!row||row.solved!==true)return;
+      const id=NAME2ID.get(String(row.name||"").toLowerCase());
+      if(id&&!STATE.solved[id]){STATE.solved[id]=true;LIVE.ids.add(id);changed=true;}
+      if(id)matched++;
+    });
+    if(changed){save();renderList();}
+    return{matched,error:null};
+  }catch(e){return{matched:0,error:(e&&e.message)||"fetch failed"};}
+}
 let STATE={solved:{},notes:{},tier:{}};
 let FILTER={status:"all",cat:"",diff:"",tag:"",q:"",sort:"cat"};
+window.syncOnce=syncOnce;window.CHALLENGES=CHALLENGES;window.STATE=STATE;
 
 async function load(){
   try{const r=await storage.get(KEY);if(r&&r.value)STATE=JSON.parse(r.value);}catch(e){}
