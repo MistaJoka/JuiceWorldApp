@@ -107,6 +107,15 @@
   #liveDot.blocked{background:var(--amber)}
   #liveMsg{color:var(--dim)}
   .bdg.live{color:var(--green);border-color:var(--green)}
+  @media (max-width:520px){
+    .wrap{padding:12px 10px 48px}
+    .kv{grid-template-columns:1fr}
+    .kv .k{color:var(--cyan)}
+    .stats{gap:8px}
+    .live input{min-width:0;flex:1 1 140px}
+    .brow{grid-template-columns:70px 1fr 30px}
+    .title{font-size:14px}
+  }
   .hidden{display:none!important}
 </style>
 

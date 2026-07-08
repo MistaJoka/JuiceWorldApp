@@ -20,7 +20,7 @@ A single-file, offline-capable **adversarial ops console** for working through a
 
 ## Run it
 
-Just open `index.html` in a browser — no build step.
+Just open `juice-shop-command-center.html` in a browser — no build step. Progress (solved state, notes, hint tiers) is saved in the browser via `localStorage`; use **EXPORT/IMPORT** in the footer to back it up or move it between machines.
 
 To attack a local Juice Shop instance:
 

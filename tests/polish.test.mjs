@@ -1,4 +1,4 @@
-import { withPage, assert, ok } from './helpers.mjs';
+import { withPage, withServer, assert, ok } from './helpers.mjs';
 
 await withPage(async (page) => {
   // Breakdown container exists and has category rows.
@@ -24,4 +24,19 @@ await withPage(async (page) => {
   const focused = await page.evaluate(() => document.activeElement && document.activeElement.id);
   assert(focused === 'search', '"/" focuses the search input');
   ok('slash focuses search');
+});
+
+await withServer(async ({ page, baseURL }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto(`${baseURL}/juice-shop-command-center.html`);
+  await page.waitForSelector('.card');
+  // No horizontal overflow at mobile width.
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  assert(overflow <= 2, `no horizontal overflow at 375px (got ${overflow}px)`);
+  ok('no horizontal overflow on mobile');
+  // The .kv grids collapse to a single column on mobile.
+  await page.click('.tab[data-tab="toolkit"]');
+  const cols = await page.evaluate(() => getComputedStyle(document.querySelector('#toolkitdoc .kv')).gridTemplateColumns);
+  assert(!/\s/.test(cols.trim()), `kv grid is single-column on mobile (got "${cols}")`);
+  ok('kv grid collapses on mobile');
 });
