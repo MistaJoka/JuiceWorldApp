@@ -40,3 +40,29 @@ await withServer(async ({ page, baseURL }) => {
   assert(failRes.error && failRes.matched === 0, 'syncOnce returns an error object on network failure');
   ok('syncOnce handles fetch failure gracefully');
 });
+
+await withServer(async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/juice-shop-command-center.html`);
+  await page.waitForSelector('.card');
+
+  // The connect UI exists.
+  assert(await page.$('#liveUrl'), 'live URL input present');
+  assert(await page.$('#liveConnect'), 'connect button present');
+  ok('live sync UI rendered');
+
+  const firstName = await page.evaluate(() => window.CHALLENGES[0].name);
+  await page.route('**/api/Challenges', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ status: 'success', data: [{ name: firstName, solved: true }] }),
+  }));
+
+  await page.fill('#liveUrl', 'http://juice.test');
+  await page.click('#liveConnect');
+  await page.waitForTimeout(400);
+
+  const dotClass = await page.evaluate(() => document.querySelector('#liveDot').className);
+  assert(/connected/.test(dotClass), 'status dot shows connected after successful sync');
+  const hasLiveBadge = await page.evaluate(() => !!document.querySelector('.card.done .bdg.live'));
+  assert(hasLiveBadge, 'auto-solved card shows a LIVE badge');
+  ok('connect flow updates status + tags live solves');
+});
