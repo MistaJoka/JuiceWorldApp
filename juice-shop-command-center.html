@@ -148,7 +148,8 @@
   <section id="resources" class="hidden"><div class="doc" id="resourcesdoc"></div></section>
 
   <div class="foot">
-    progress persists locally &middot; click any <code style="cursor:default">command</code> to copy &middot; <button class="reset" id="reset">RESET ALL PROGRESS</button>
+    progress persists locally &middot; click any <code style="cursor:default">command</code> to copy &middot; <button class="reset" id="exportBtn">EXPORT</button> <button class="reset" id="importBtn">IMPORT</button> <button class="reset" id="reset">RESET ALL PROGRESS</button>
+    <input type="file" id="importFile" accept="application/json" class="hidden">
   </div>
 </div>
 <div id="toast"></div>
@@ -533,6 +534,28 @@ function wire(){
     renderList();
   };
   $("#reset").onclick=async()=>{if(!confirm("wipe all progress, notes, and hint state?"))return;STATE={solved:{},notes:{},tier:{}};try{await storage.delete(KEY);}catch(e){}save();renderList();};
+  $("#exportBtn").onclick=()=>{
+    const blob=new Blob([JSON.stringify(STATE,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);const a=document.createElement("a");
+    a.href=url;a.download="juiceworld-progress.json";document.body.appendChild(a);a.click();
+    a.remove();URL.revokeObjectURL(url);toast("progress exported");
+  };
+  $("#importBtn").onclick=()=>$("#importFile").click();
+  $("#importFile").onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const rd=new FileReader();
+    rd.onload=()=>{
+      try{
+        const d=JSON.parse(rd.result);
+        if(!d||typeof d!=="object"||typeof d.solved!=="object")throw 0;
+        if(!confirm("replace current progress with the imported file?")){e.target.value="";return;}
+        STATE={solved:d.solved||{},notes:d.notes||{},tier:d.tier||{}};
+        save();renderList();toast("progress imported");
+      }catch(_){toast("invalid progress file");}
+      e.target.value="";
+    };
+    rd.readAsText(f);
+  };
   // populate category + tag selects from data
   const sc=$("#fcat");CAT_ORDER.forEach(c=>{if(CHALLENGES.some(x=>x.cat===c)){const o=el("option");o.value=c;o.textContent=c;sc.appendChild(o);}});
   const st=$("#ftag");[...new Set(CHALLENGES.flatMap(c=>c.tags))].sort().forEach(t=>{const o=el("option");o.value=t;o.textContent=t;st.appendChild(o);});
