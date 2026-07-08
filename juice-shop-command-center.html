@@ -93,6 +93,11 @@
   .hint-inline{color:var(--dim);font-size:10px;margin-left:auto;margin-top:6px}
   #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--green);color:var(--green);padding:8px 14px;border-radius:6px;font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;font-family:var(--mono)}
   #toast.show{opacity:1}
+  #breakdown{margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:4px 14px}
+  .brow{display:grid;grid-template-columns:88px 1fr 34px;gap:8px;align-items:center;font-size:10px;color:var(--dim)}
+  .mini{height:6px;background:#0a100c;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  .mini > i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));width:0%}
+  .brow .n{text-align:right;color:var(--ink)}
   .live{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;font-size:11px}
   .live input{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:5px 8px;border-radius:6px;font-family:var(--mono);font-size:11px;min-width:180px}
   .live button{background:var(--panel2);border:1px solid var(--line);color:var(--cyan);padding:5px 10px;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:11px}
@@ -116,6 +121,7 @@
       <span id="bycat"></span>
       <span id="bydiff"></span>
     </div>
+    <div id="breakdown"></div>
     <div class="live">
       <span id="liveDot" class="idle"></span>
       <input id="liveUrl" value="http://localhost:3000" placeholder="http://localhost:3000">
@@ -326,6 +332,23 @@ function updateStats(){
   $("#bycat").textContent="\u00b7 "+full+"/"+Object.keys(map).length+" categories cleared";
   const dz=CHALLENGES.filter(c=>c.danger);const dzDone=dz.filter(c=>STATE.solved[c.id]).length;
   $("#bydiff").textContent="\u00b7 danger zone "+dzDone+"/"+dz.length;
+  renderBreakdown();
+}
+function renderBreakdown(){
+  const box=$("#breakdown");if(!box)return;box.innerHTML="";
+  const byCat={};CHALLENGES.forEach(c=>{const m=byCat[c.cat]=byCat[c.cat]||[0,0];m[1]++;if(STATE.solved[c.id])m[0]++;});
+  const cats=CAT_ORDER.filter(c=>byCat[c]).concat(Object.keys(byCat).filter(c=>!CAT_ORDER.includes(c)));
+  cats.forEach(cat=>{const[d,t]=byCat[cat];box.appendChild(bar(cat,d,t));});
+  const byDiff={};CHALLENGES.forEach(c=>{const m=byDiff[c.diff]=byDiff[c.diff]||[0,0];m[1]++;if(STATE.solved[c.id])m[0]++;});
+  Object.keys(byDiff).sort().forEach(d=>{const[s,t]=byDiff[d];box.appendChild(bar(stars(+d),s,t));});
+}
+function bar(label,done,total){
+  const pct=total?Math.round(done/total*100):0;
+  const row=el("div","brow");
+  row.appendChild(el("span",null,label));
+  const m=el("div","mini");const i=el("i");i.style.width=pct+"%";m.appendChild(i);row.appendChild(m);
+  row.appendChild(el("span","n",done+"/"+total));
+  return row;
 }
 
 function docs(){
@@ -633,6 +656,9 @@ function wire(){
   // populate category + tag selects from data
   const sc=$("#fcat");CAT_ORDER.forEach(c=>{if(CHALLENGES.some(x=>x.cat===c)){const o=el("option");o.value=c;o.textContent=c;sc.appendChild(o);}});
   const st=$("#ftag");[...new Set(CHALLENGES.flatMap(c=>c.tags))].sort().forEach(t=>{const o=el("option");o.value=t;o.textContent=t;st.appendChild(o);});
+  document.addEventListener("keydown",e=>{
+    if(e.key==="/"&&!/^(input|textarea|select)$/i.test((e.target.tagName||""))){e.preventDefault();const s=$("#search");if(s){document.querySelector('.tab[data-tab="challenges"]').click();s.focus();}}
+  });
 }
 
 (async function(){
