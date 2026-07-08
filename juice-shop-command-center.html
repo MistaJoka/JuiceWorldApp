@@ -169,15 +169,20 @@ const TAGCLS={"Danger Zone":"danger","Prerequisite":"prereq","Brute Force":"brut
 const SHOW_BADGE=new Set(["Danger Zone","Prerequisite","Brute Force","Tutorial","Code Analysis","OSINT","AI/LLM","Web3"]);
 
 const KEY="juiceshop:state";
+const storage=(typeof window!=="undefined"&&window.storage)?window.storage:{
+  get:async k=>({value:localStorage.getItem(k)}),
+  set:async(k,v)=>{localStorage.setItem(k,v);},
+  delete:async k=>{localStorage.removeItem(k);}
+};
 let STATE={solved:{},notes:{},tier:{}};
 let FILTER={status:"all",cat:"",diff:"",tag:"",q:"",sort:"cat"};
 
 async function load(){
-  try{const r=await window.storage.get(KEY);if(r&&r.value)STATE=JSON.parse(r.value);}catch(e){}
+  try{const r=await storage.get(KEY);if(r&&r.value)STATE=JSON.parse(r.value);}catch(e){}
   STATE.solved=STATE.solved||{};STATE.notes=STATE.notes||{};STATE.tier=STATE.tier||{};
 }
 let saveTimer=null;
-function save(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await window.storage.set(KEY,JSON.stringify(STATE));}catch(e){}},200);}
+function save(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await storage.set(KEY,JSON.stringify(STATE));}catch(e){}},200);}
 
 const $=s=>document.querySelector(s);
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
@@ -527,7 +532,7 @@ function wire(){
     $("#ftag").value="Tutorial";$("#fsort").value="diff";$("#fcat").value="";$("#fdiff").value="";$("#search").value="";
     renderList();
   };
-  $("#reset").onclick=async()=>{if(!confirm("wipe all progress, notes, and hint state?"))return;STATE={solved:{},notes:{},tier:{}};try{await window.storage.delete(KEY);}catch(e){}save();renderList();};
+  $("#reset").onclick=async()=>{if(!confirm("wipe all progress, notes, and hint state?"))return;STATE={solved:{},notes:{},tier:{}};try{await storage.delete(KEY);}catch(e){}save();renderList();};
   // populate category + tag selects from data
   const sc=$("#fcat");CAT_ORDER.forEach(c=>{if(CHALLENGES.some(x=>x.cat===c)){const o=el("option");o.value=c;o.textContent=c;sc.appendChild(o);}});
   const st=$("#ftag");[...new Set(CHALLENGES.flatMap(c=>c.tags))].sort().forEach(t=>{const o=el("option");o.value=t;o.textContent=t;st.appendChild(o);});

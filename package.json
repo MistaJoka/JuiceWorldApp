@@ -1,0 +1,11 @@
+{
+  "name": "juiceworld-command-center-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/persistence.test.mjs && node tests/portability.test.mjs && node tests/livesync.test.mjs && node tests/toolkit.test.mjs && node tests/polish.test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.44.0"
+  }
+}
