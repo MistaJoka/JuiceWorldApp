@@ -94,6 +94,26 @@ await withPage(async (page) => {
 });
 
 await withPage(async (page) => {
+  // Verified walkthrough (Login Admin, sv:1) shows NO "unverified" note.
+  const v = '.card[data-id="c1"]';
+  await page.click(`${v} .chead`);
+  await page.click(`${v} .solbtn`);
+  await page.waitForSelector(`${v} ol.solution li.solstep`);
+  const vNote = await page.$(`${v} ol.solution li.solnote`);
+  assert(vNote === null, 'verified walkthrough shows no unverified note');
+  ok('verified walkthrough: no unverified note');
+
+  // Unverified walkthrough (Bonus Payload, no sv) shows the "unverified" note.
+  const u = '.card[data-id="c51"]';
+  await page.click(`${u} .chead`);
+  await page.click(`${u} .solbtn`);
+  await page.waitForSelector(`${u} ol.solution li.solnote`);
+  const uText = await page.$eval(`${u} ol.solution li.solnote`, e => e.textContent);
+  assert(/unverified/i.test(uText), 'unverified walkthrough shows the unverified note');
+  ok('unverified walkthrough: note shown');
+});
+
+await withPage(async (page) => {
   const payload = JSON.stringify({ solved:{}, notes:{}, tier:{}, sol:{ c1:true } });
   page.on('dialog', d => d.accept());
   await page.setInputFiles('#importFile', { name:'progress.json', mimeType:'application/json', buffer: Buffer.from(payload) });
