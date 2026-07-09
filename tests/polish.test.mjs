@@ -26,6 +26,24 @@ await withPage(async (page) => {
   ok('slash focuses search');
 });
 
+await withPage(async (page) => {
+  // Challenge text (goals/hints/walkthrough steps) is rendered via el()'s innerHTML,
+  // so any attack payload meant to be SHOWN must be entity-escaped, not raw HTML.
+  // Guard the whole list: no live <iframe> may ever be injected by challenge data.
+  const iframes = await page.evaluate(() => document.querySelectorAll('#list iframe').length);
+  assert(iframes === 0, `no live <iframe> injected by challenge data (found ${iframes})`);
+  ok('no live iframe injected by challenge text');
+
+  // Reflected XSS hint 2 uses example tags (<h1>, <strike>) that must display as
+  // literal text, not render as elements. Open the card and read its second hint.
+  await page.click('.card[data-id="c53"] .chead');
+  const hintText = await page.$$eval('.card[data-id="c53"] .reveal',
+    els => els.map(e => e.textContent).join('\n'));
+  assert(hintText.includes('<h1>') && hintText.includes('<strike>'),
+    'Reflected XSS hint shows <h1>/<strike> as literal text');
+  ok('example tags in hints render as text');
+});
+
 await withServer(async ({ page, baseURL }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto(`${baseURL}/juice-shop-command-center.html`);
