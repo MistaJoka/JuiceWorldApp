@@ -12,7 +12,7 @@ A single-file, offline-capable **adversarial ops console** for working through a
 
 - **113 canonical challenges** — names, categories, difficulty, and hints pulled from the official Juice Shop manifest, not hand-curated
 - **Tiered hints** — official progressive `HINT 1..N` per challenge, revealed on demand so you only spoil as much as you need. Deepest tier unlocks official book + solution links as a last resort
-- **Full walkthroughs** — challenges in the tutorial + SQL-injection starter set carry a complete step-by-step solution behind a per-card **REVEAL FULL SOLUTION** toggle; every other challenge falls back to the official solution link. Reveal state persists and travels with EXPORT/IMPORT.
+- **Full walkthroughs** — every one of the 113 challenges carries a complete step-by-step solution behind a per-card **REVEAL FULL SOLUTION** toggle. 93 are **verified end-to-end against a live Juice Shop v20 instance** (the solve was actually run and the challenge confirmed solved); the ~20 that can't be verified over HTTP (browser-only detection, DoS payloads, on-chain Web3, LLM, OSINT) are authored from expertise and carry a **⚠ unverified** marker. Reveal state persists and travels with EXPORT/IMPORT.
 - **Per-challenge fix links** — 80 challenges carry their exact OWASP Cheat Sheet URL, for the remediation half of a real write-up
 - **Tag-aware** — `Danger Zone`, `Prerequisite`, `Brute Force`, `Tutorial`, `Code Analysis`, OSINT, AI/LLM, Web3 badges + filter
 - **Guided workflow** — sort by difficulty, filter by tag/category/status, or hit **start here** for the Tutorial on-ramp
