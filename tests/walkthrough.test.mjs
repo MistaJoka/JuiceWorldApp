@@ -78,3 +78,27 @@ await withPage(async (page) => {
   await page.waitForSelector(`${sel} ol.solution li.solstep code.copied`);
   ok('code inside a solution step copies on click');
 });
+
+await withPage(async (page) => {
+  const sel = '.card[data-id="c52"]'; // DOM XSS — payload must render as text, not a live element
+  await page.click(`${sel} .chead`);
+  await page.click(`${sel} .solbtn`);
+  await page.waitForSelector(`${sel} ol.solution li.solstep code`);
+  const codeText = await page.$$eval(`${sel} ol.solution li.solstep code`, els => els.map(e => e.textContent).join('|'));
+  assert(codeText.includes('<iframe'), 'XSS payload renders as literal text, not a parsed element');
+  ok('XSS payload displayed as text');
+  // And no live iframe was injected into the solution block.
+  const iframes = await page.$$eval(`${sel} ol.solution iframe`, els => els.length);
+  assert(iframes === 0, 'no live iframe injected by a walkthrough step');
+  ok('no live iframe injected');
+});
+
+await withPage(async (page) => {
+  const payload = JSON.stringify({ solved:{}, notes:{}, tier:{}, sol:{ c1:true } });
+  page.on('dialog', d => d.accept());
+  await page.setInputFiles('#importFile', { name:'progress.json', mimeType:'application/json', buffer: Buffer.from(payload) });
+  await page.waitForTimeout(200);
+  const imported = await page.evaluate(() => window.STATE.sol && window.STATE.sol.c1 === true);
+  assert(imported, 'sol reconstructed from IMPORT');
+  ok('sol round-trips through IMPORT');
+});
