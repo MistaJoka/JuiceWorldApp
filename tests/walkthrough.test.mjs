@@ -37,3 +37,44 @@ await withPage(async (page) => {
   assert(!afterReset, 'reset clears sol');
   ok('reset clears sol');
 });
+
+await withPage(async (page) => {
+  // Open the Login Admin card (authored). Cards carry data-id; Login Admin is c1.
+  const sel = '.card[data-id="c1"]';
+  await page.click(`${sel} .chead`);
+
+  // Reveal button is present without touching any hint tier.
+  await page.waitForSelector(`${sel} .solbtn`);
+  let stepsVisible = await page.$(`${sel} ol.solution`);
+  assert(!stepsVisible, 'solution steps hidden before reveal');
+  ok('reveal button present, steps hidden initially');
+
+  // Click reveals the ordered step list.
+  await page.click(`${sel} .solbtn`);
+  await page.waitForSelector(`${sel} ol.solution li.solstep`);
+  const count = await page.$$eval(`${sel} ol.solution li.solstep`, els => els.length);
+  assert(count > 0, 'solution steps render after reveal');
+  ok('reveal shows step list');
+
+  // Persists across reload (card must be re-opened; reveal state stays true).
+  // save() debounces its localStorage write by 200ms (see save() in the app), so
+  // give it time to flush before navigating away, same as the Task 2 persistence test.
+  await page.waitForTimeout(250);
+  await page.reload();
+  await page.waitForSelector('.card');
+  await page.click(`${sel} .chead`);
+  await page.waitForSelector(`${sel} ol.solution li.solstep`);
+  ok('reveal persists across reload');
+
+  // A card with no authored solution shows no reveal button. Chatbot Prompt Injection is c0.
+  const noSel = '.card[data-id="c0"]';
+  await page.click(`${noSel} .chead`);
+  const noBtn = await page.$(`${noSel} .solbtn`);
+  assert(!noBtn, 'unauthored challenge has no reveal button');
+  ok('unauthored challenge shows no reveal button');
+
+  // <code> inside a step copies on click (reuses the app's copy delegation).
+  await page.click(`${sel} ol.solution li.solstep code`);
+  await page.waitForSelector(`${sel} ol.solution li.solstep code.copied`);
+  ok('code inside a solution step copies on click');
+});
