@@ -98,9 +98,9 @@
   .mini{height:6px;background:#0a100c;border:1px solid var(--line);border-radius:4px;overflow:hidden}
   .mini > i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));width:0%}
   .brow .n{text-align:right;color:var(--ink)}
-  .live{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;font-size:11px}
-  .live input{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:5px 8px;border-radius:6px;font-family:var(--mono);font-size:11px;min-width:180px}
-  .live button{background:var(--panel2);border:1px solid var(--line);color:var(--cyan);padding:5px 10px;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:11px}
+  .livebar{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;font-size:11px}
+  .livebar input{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:5px 8px;border-radius:6px;font-family:var(--mono);font-size:11px;min-width:180px}
+  .livebar button{background:var(--panel2);border:1px solid var(--line);color:var(--cyan);padding:5px 10px;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:11px}
   #liveDot{width:9px;height:9px;border-radius:50%;background:var(--dim);flex:0 0 auto}
   #liveDot.connected{background:var(--green)}
   #liveDot.error{background:var(--red)}
@@ -112,7 +112,7 @@
     .kv{grid-template-columns:1fr}
     .kv .k{color:var(--cyan)}
     .stats{gap:8px}
-    .live input{min-width:0;flex:1 1 140px}
+    .livebar input{min-width:0;flex:1 1 140px}
     .brow{grid-template-columns:70px 1fr 30px}
     .title{font-size:14px}
   }
@@ -131,7 +131,7 @@
       <span id="bydiff"></span>
     </div>
     <div id="breakdown"></div>
-    <div class="live">
+    <div class="livebar">
       <span id="liveDot" class="idle"></span>
       <input id="liveUrl" value="http://localhost:3000" placeholder="http://localhost:3000">
       <button id="liveConnect">CONNECT LIVE</button>
@@ -625,7 +625,7 @@ function wire(){
     $("#ftag").value="Tutorial";$("#fsort").value="diff";$("#fcat").value="";$("#fdiff").value="";$("#search").value="";
     renderList();
   };
-  $("#reset").onclick=async()=>{if(!confirm("wipe all progress, notes, and hint state?"))return;STATE={solved:{},notes:{},tier:{}};try{await storage.delete(KEY);}catch(e){}save();renderList();};
+  $("#reset").onclick=async()=>{if(!confirm("wipe all progress, notes, and hint state?"))return;STATE={solved:{},notes:{},tier:{}};LIVE.ids.clear();try{await storage.delete(KEY);}catch(e){}save();renderList();};
   $("#exportBtn").onclick=()=>{
     const blob=new Blob([JSON.stringify(STATE,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);const a=document.createElement("a");
@@ -659,8 +659,10 @@ function wire(){
     if(isBlocked()){setLive("blocked","live sync needs a local (http/file) context — download this file and open it locally to enable it");return;}
     const url=$("#liveUrl").value.trim();if(!url)return;
     LIVE.url=url;$("#liveConnect").textContent="DISCONNECT";
+    $("#liveConnect").disabled=true;
     await livePoll(url);
     LIVE.timer=setInterval(()=>livePoll(url),15000);
+    $("#liveConnect").disabled=false;
   };
   // populate category + tag selects from data
   const sc=$("#fcat");CAT_ORDER.forEach(c=>{if(CHALLENGES.some(x=>x.cat===c)){const o=el("option");o.value=c;o.textContent=c;sc.appendChild(o);}});
