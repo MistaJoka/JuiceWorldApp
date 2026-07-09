@@ -7,11 +7,22 @@ await withPage(async (page) => {
   assert(Array.isArray(authored) && authored.length > 0, 'Login Admin has authored sol steps');
   ok('authored challenge exposes sol steps');
 
-  // Unauthored challenge exposes an empty solution array (not undefined).
-  const unauthored = await page.evaluate(() =>
-    window.CHALLENGES.find(c => c.name === 'Chatbot Prompt Injection').sol);
-  assert(Array.isArray(unauthored) && unauthored.length === 0, 'Chatbot Prompt Injection has empty sol');
-  ok('unauthored challenge exposes empty sol');
+  // Mechanism: a challenge with an empty sol array renders NO reveal button;
+  // one with steps renders the button. Tested synthetically via window.card so it
+  // holds regardless of how many real challenges have been authored.
+  const noBtn = await page.evaluate(() => {
+    const el = window.card({ id: 'ctest0', name: 'Synthetic Empty', cat: 'x', diff: 1, goal: 'g', tags: [], hints: [], sol: [], solVerified: false });
+    return el.querySelector('.solbtn') === null;
+  });
+  assert(noBtn, 'empty sol renders no reveal button');
+  ok('empty sol: no reveal button');
+
+  const hasBtn = await page.evaluate(() => {
+    const el = window.card({ id: 'ctest1', name: 'Synthetic Filled', cat: 'x', diff: 1, goal: 'g', tags: [], hints: [], sol: ['step one'], solVerified: false });
+    return el.querySelector('.solbtn') !== null;
+  });
+  assert(hasBtn, 'non-empty sol renders a reveal button');
+  ok('non-empty sol: reveal button present');
 });
 
 await withPage(async (page) => {
@@ -65,13 +76,6 @@ await withPage(async (page) => {
   await page.click(`${sel} .chead`);
   await page.waitForSelector(`${sel} ol.solution li.solstep`);
   ok('reveal persists across reload');
-
-  // A card with no authored solution shows no reveal button. Chatbot Prompt Injection is c0.
-  const noSel = '.card[data-id="c0"]';
-  await page.click(`${noSel} .chead`);
-  const noBtn = await page.$(`${noSel} .solbtn`);
-  assert(!noBtn, 'unauthored challenge has no reveal button');
-  ok('unauthored challenge shows no reveal button');
 
   // <code> inside a step copies on click (reuses the app's copy delegation).
   await page.click(`${sel} ol.solution li.solstep code`);
