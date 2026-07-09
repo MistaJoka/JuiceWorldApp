@@ -225,13 +225,14 @@ async function syncOnce(url){
     return{matched,error:null};
   }catch(e){return{matched:0,error:(e&&e.message)||"fetch failed"};}
 }
-let STATE={solved:{},notes:{},tier:{}};
+let STATE={solved:{},notes:{},tier:{},sol:{}};
 let FILTER={status:"all",cat:"",diff:"",tag:"",q:"",sort:"cat"};
-window.syncOnce=syncOnce;window.CHALLENGES=CHALLENGES;window.STATE=STATE;
+window.syncOnce=syncOnce;window.CHALLENGES=CHALLENGES;window.STATE=STATE;window.save=save;
 
 async function load(){
   try{const r=await storage.get(KEY);if(r&&r.value)STATE=JSON.parse(r.value);}catch(e){}
-  STATE.solved=STATE.solved||{};STATE.notes=STATE.notes||{};STATE.tier=STATE.tier||{};
+  STATE.solved=STATE.solved||{};STATE.notes=STATE.notes||{};STATE.tier=STATE.tier||{};STATE.sol=STATE.sol||{};
+  window.STATE=STATE;
 }
 let saveTimer=null;
 function save(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await storage.set(KEY,JSON.stringify(STATE));}catch(e){}},200);}
@@ -625,7 +626,7 @@ function wire(){
     $("#ftag").value="Tutorial";$("#fsort").value="diff";$("#fcat").value="";$("#fdiff").value="";$("#search").value="";
     renderList();
   };
-  $("#reset").onclick=async()=>{if(!confirm("wipe all progress, notes, and hint state?"))return;STATE={solved:{},notes:{},tier:{}};LIVE.ids.clear();try{await storage.delete(KEY);}catch(e){}save();renderList();};
+  $("#reset").onclick=async()=>{if(!confirm("wipe all progress, notes, and hint state?"))return;STATE={solved:{},notes:{},tier:{},sol:{}};window.STATE=STATE;LIVE.ids.clear();try{await storage.delete(KEY);}catch(e){}save();renderList();};
   $("#exportBtn").onclick=()=>{
     const blob=new Blob([JSON.stringify(STATE,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);const a=document.createElement("a");
@@ -641,7 +642,8 @@ function wire(){
         const d=JSON.parse(rd.result);
         if(!d||typeof d!=="object"||typeof d.solved!=="object")throw 0;
         if(!confirm("replace current progress with the imported file?")){e.target.value="";return;}
-        STATE={solved:d.solved||{},notes:d.notes||{},tier:d.tier||{}};
+        STATE={solved:d.solved||{},notes:d.notes||{},tier:d.tier||{},sol:d.sol||{}};
+        window.STATE=STATE;
         save();renderList();toast("progress imported");
       }catch(_){toast("invalid progress file");}
       e.target.value="";
